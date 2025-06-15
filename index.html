@@ -1,0 +1,281 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); 
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+</script>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GroceryDash</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">GroceryDash</div>
+            <i class="fas fa-bars menu-toggle"></i>
+            <ul class="nav-links">
+                <li><a href="#home" class="nav-link"><i class="fas fa-home"></i> Home</a></li>
+                <li><a href="#products" class="nav-link"><i class="fas fa-shopping-basket"></i> Products</a></li>
+                <li><a href="#cart" class="nav-link"><i class="fas fa-shopping-cart"></i> Cart (<span id="cart-count">0</span>)</a></li>
+                <li><a href="#orders" class="nav-link"><i class="fas fa-clipboard-list"></i> Orders</a></li>
+                <li><a href="#about" class="nav-link"><i class="fas fa-info-circle"></i> About</a></li>
+                <li><a href="#faq" class="nav-link"><i class="fas fa-question-circle"></i> FAQ</a></li>
+                <li><a href="#contact" class="nav-link"><i class="fas fa-envelope"></i> Contact</a></li>
+                <li><a href="#login" class="nav-link" id="login-link"><i class="fas fa-sign-in-alt"></i> Login</a></li>
+                <li id="user-status"></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section id="welcome-modal" style="display: none;">
+        <div class="modal-content">
+            <h2>Welcome to GroceryDash!</h2>
+            <p>Please log in or register to start shopping.</p>
+            <div class="modal-buttons">
+            <button class="modal-btn login-btn">Log In</button>
+            <button class="modal-btn register-btn">Register</button>
+            <button class="modal-btn continue-guest">Continue as Guest</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <h1>Fresh Groceries, Delivered Fast</h1>
+            <p>Your local grocery store at your fingertips - fresh, fast, and hassle-free!</p>
+            <button class="shop-now">Shop Now</button>
+        </div>
+    </section>
+
+    <section id="products">
+        <h1>Our Products</h1>
+        <div class="product-controls">
+            <input type="text" id="search-input" class="search-bar" placeholder="Search products...">
+            <div class="browse-by">
+                <h3>Browse by:</h3>
+                <div class="category-buttons">
+                    <button class="category-btn active" data-category="all">All Products</button>
+                    <button class="category-btn" data-category="dairy">Dairy</button>
+                    <button class="category-btn" data-category="meat">Meat</button>
+                    <button class="category-btn" data-category="produce">Produce</button>
+                </div>
+            </div>
+           <div class="filter-by">
+            <h3>Filter by:</h3>
+                <select class="filter-select">
+                    <option value="default">Default</option>
+                    <option value="price-asc">Price: Low to High</option>
+                    <option value="price-desc">Price: High to Low</option>
+                    <option value="weight">Weight</option>
+                </select>
+            </div>
+        </div>
+        <div class="loader"></div>
+        <div class="product-grid"></div>
+    </section>
+
+    <section id="about">
+        <h2>About GroceryDash</h2>
+        <div class="about-content">
+            <div class="mission">
+                <h3>Our Mission</h3>
+                <p>At GroceryDash, we connect you with local stores for the freshest groceries, delivered to your door in record time. Our platform supports local businesses and ensures you get quality products with ultimate convenience.</p>
+            </div>
+            <div class="why-choose">
+                <h3>Why Choose Us?</h3>
+                <ul>
+                    <li>Same-day delivery from local stores</li>
+                    <li>Fresh, high-quality products</li>
+                    <li>User-friendly and responsive design</li>
+                    <li>Support for your community</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact">
+        <h2>Contact Us</h2>
+        <div class="contact-content">
+            <form id="contact-form" class="contact-form">
+                <h3>Get in Touch</h3>
+                <p>Have questions or need assistance? Fill out the form below, and we'll get back to you as soon as possible!</p>
+                <input type="text" placeholder="Your Name" required>
+                <input type="email" placeholder="Your Email" required>
+                <textarea placeholder="Your Message" required></textarea>
+                <button type="submit" class="submit-btn">Send Message</button>
+            </form>
+            <div class="contact-info">
+                <h3>Contact Information</h3>
+                <p><i class="fas fa-map-marker-alt"></i> 123 Fresh Street, Grocery City, GC 12345</p>
+                <p><i class="fas fa-phone"></i> (123) 456-7890</p>
+                <p><i class="fas fa-envelope"></i> [email protected]</p>
+                <p><i class="fas fa-clock"></i> Mon - Fri: 9 AM - 6 PM</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="faq">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-list">
+            <div class="faq-item">
+                <h3>How does GroceryDash deliver my groceries?</h3>
+                <p>We partner with local stores to deliver fresh groceries to your door using our efficient delivery network.</p>
+            </div>
+            <div class="faq-item">
+                <h3>What are your delivery hours?</h3>
+                <p>Deliveries are available Monday to Friday, from 9 AM to 6 PM. You can select a preferred delivery time during checkout.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Can I modify my order after placing it?</h3>
+                <p>You can modify your order within 1 hour of placing it by contacting our support team at (123) 456-7890.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Do you offer refunds or returns?</h3>
+                <p>Yes, we offer refunds for damaged or incorrect items. Please contact us within 24 hours of delivery.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="orders">
+        <h2>Your Orders</h2>
+        <div class="loader"></div>
+        <div class="order-list"></div>
+    </section>
+
+    <section id="cart">
+        <h2>Your Cart</h2>
+        <div class="loader"></div>
+        <div class="cart-items"></div>
+        <div class="cart-summary">
+            <h3>Total: ₱<span id="cart-total">0.00</span></h3>
+            <button class="checkout">Proceed to Checkout</button>
+        </div>
+    </section>
+
+    <section id="checkout">
+        <h2>Checkout</h2>
+        <div class="checkout-content">
+            <form id="checkout-form" class="checkout-form">
+                <h3>Delivery Details</h3>
+                <input type="text" id="address" placeholder="Delivery Address" required>
+                <input type="text" id="zip-code" placeholder="Zip Code" required>
+                <select id="delivery-time" required>
+                    <option value="" disabled selected>Select Delivery Time</option>
+                    <option value="9:00 AM - 12:00 PM">9:00 AM - 12:00 PM</option>
+                    <option value="12:00 PM - 3:00 PM">12:00 PM - 3:00 PM</option>
+                    <option value="3:00 PM - 6:00 PM">3:00 PM - 6:00 PM</option>
+                </select>
+                <select id="payment-method" required>
+                    <option value="" disabled selected>Select Payment Method</option>
+                    <option value="credit-card">Credit Card</option>
+                    <option value="debit-card">Debit Card</option>
+                    <option value="paypal">PayPal</option>
+                </select>
+                <button type="submit" class="submit-btn">Place Order</button>
+            </form>
+            <div class="cart-summary">
+                <h3>Total: ₱<span id="cart-total">0.00</span></h3>
+            </div>
+        </div>
+    </section>
+
+    <section id="login">
+        <h2>Login</h2>
+        <div class="login-content">
+            <form id="login-form" class="contact-form">
+                <h3>Sign In</h3>
+                <p>Enter your credentials to access your account.</p>
+                <input type="email" id="login-email" placeholder="Email" required>
+                <input type="password" id="login-password" placeholder="Password" required>
+                <button type="submit" class="submit-btn">Login</button>
+                <p>Don't have an account? <a href="#register" class="nav-links">Register here</a></p>
+            </form>
+        </div>
+    </section>
+
+    <section id="register">
+        <h2>Register</h2>
+        <div class="register-content">
+            <form id="register-form" class="contact-form">
+                <h3>Create an Account</h3>
+                <p>Sign up to start shopping with GroceryDash!</p>
+                <input type="email" id="register-email" placeholder="Email" required>
+                <input type="password" id="register-password" placeholder="Password" required>
+                <input type="password" id="confirm-password" placeholder="Confirm Password" required>
+                <button type="submit" class="submit-btn">Register</button>
+                <p>Already have an account? <a href="#login">Login here</a></p>
+            </form>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-logo">
+                <h2>GroceryDash™</h2>
+            </div>
+            <div class="footer-sections">
+                <div class="connect">
+                    <h4>Connect With Us</h4>
+                    <div class="social-links">
+                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="contact">
+                    <h4>Contact Us</h4>
+                    <p><i class="fas fa-map-marker-alt"></i> 123 Fresh Street, Grocery City, GC 12345</p>
+                    <p><i class="fas fa-phone"></i> (123) 456-7890</p>
+                    <p><i class="fas fa-envelope"></i> [email protected]</p>
+                    <p><i class="fas fa-clock"></i> Mon - Fri: 9 AM - 6 PM</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <hr>
+                <p>© 2025 GroceryDash. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
