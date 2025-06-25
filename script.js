@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
   const products = [
-    { id: 1, name: 'Fresh Apples', price: 158.61, image: 'https://ik.imagekit.io/fngldq7ef/FreshApples.png?updatedAt=1749955556195', category: 'produce', weight: '1kg' },
+    { id: 1, name: 'Fresh Apples', price: 158.61, image: 'https://ik.imagekit.io/fngldq7ef/Tomatoes.png?updatedAt=1749955899656', category: 'produce', weight: '1kg' },
     { id: 2, name: 'Organic Bananas', price: 112, image: 'https://ik.imagekit.io/fngldq7ef/OrganicBananas.png?updatedAt=1749955789571', category: 'produce', weight: '3kg' },
     { id: 3, name: 'Free-Range Eggs', price: 300, image: 'https://ik.imagekit.io/fngldq7ef/Free-RangeEggs.png?updatedAt=1749955523930', category: 'dairy', weight: '720g' },
     { id: 4, name: 'Cheddar Cheese', price: 475.66, image: 'https://ik.imagekit.io/fngldq7ef/CheddarCheese.png?updatedAt=1749955322136', category: 'dairy', weight: '160g' },
